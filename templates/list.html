@@ -14,7 +14,7 @@
             <img src="{{ each.image_url }}" class="card-img-top" alt="...">
             <div class="card-body">
                 <h5 class="card-title">{{ each.title|slice:":25"}} ...</h5>
-                <p class="card-text">${{ each.price|floatformat:2 }}</p>                
+                <p class="card-text">₹{{ each.price|floatformat:2 }}</p>                
                 {% if each.book_available is True %}
                 <li class="text-primary">Available</li>
                 {% else %}

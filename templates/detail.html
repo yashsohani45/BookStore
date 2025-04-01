@@ -22,7 +22,7 @@
 
 <!-- <p>Follow Author: </p> -->
 <p><a href="{{ object.follow_author }}">Follow Author</a> </p>
-<p>Price: $ {{ object.price|floatformat:2 }}</p>
+<p>Price: ₹ {{ object.price|floatformat:2 }}</p>
 
 
 {% if object.book_available is True %}
