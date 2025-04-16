@@ -1,20 +1,16 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView
-from django.views.generic.edit import CreateView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Book, Order, Genre, CartItem
-from django.urls import reverse_lazy
-from django.db.models import Q  # for search method
-from django.http import JsonResponse
-import json
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
-from .models import Profile
-from .forms import ProfileForm
-from django.core.mail import send_mail
-from .models import Order
+from django.db.models import Q
+from django.http import JsonResponse
+from django.contrib import messages
+import json
+from django.contrib.auth.mixins import LoginRequiredMixin  # Add this line
 
+
+from .models import Book, Order, Genre, CartItem, Profile, Comment
+from .forms import ProfileForm
 
 
 class BooksListView(ListView):
@@ -25,23 +21,41 @@ class BooksListView(ListView):
     def get_queryset(self):
         genre = self.request.GET.get('genre')
         if genre:
-            return Book.objects.filter(genres__name=genre)  # Filter books by selected genre
-        return Book.objects.all()  # Show all books if no genre is selected
+            return Book.objects.filter(genres__name=genre)
+        return Book.objects.all()
 
 
 class BooksDetailView(DetailView):
     model = Book
     template_name = 'detail.html'
 
-    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from_used = self.request.GET.get('from_used') == 'true'
         context['show_condition'] = from_used
+        context['comments'] = Comment.objects.filter(book=self.object, parent=None).order_by('-created_at').prefetch_related('replies')
         return context
 
 
-from django.db.models import Q
+@login_required
+def post_comment(request, book_id):
+    book = get_object_or_404(Book, id=book_id)
+    if request.method == 'POST':
+        content = request.POST.get('content', '').strip()
+        parent_id = request.POST.get('parent_id')
+
+        parent = None
+        if parent_id:
+            try:
+                parent = Comment.objects.get(id=parent_id)
+            except Comment.DoesNotExist:
+                parent = None  # fallback if parent doesn't exist
+
+        if content:
+            Comment.objects.create(user=request.user, book=book, content=content, parent=parent)
+
+    return redirect('book_detail', pk=book.id)
+
 
 class SearchResultsListView(ListView):
     model = Book
@@ -56,24 +70,21 @@ class SearchResultsListView(ListView):
         ).distinct()
 
 
-
 class BookCheckoutView(LoginRequiredMixin, DetailView):
     model = Book
     template_name = 'checkout.html'
     login_url = 'login'
 
 
+@csrf_exempt
+@login_required
 def paymentComplete(request):
     body = json.loads(request.body)
-    print('BODY:', body)
-    product = Book.objects.get(id=body['productId'])
-    Order.objects.create(
-        product=product
-    )
+    CartItem.objects.filter(user=request.user).delete()
+    messages.success(request, 'Payment completed successfully!')
     return JsonResponse('Payment completed!', safe=False)
 
 
-# View to list all books of a selected genre
 class GenreBooksListView(ListView):
     model = Book
     template_name = 'books_by_genre.html'
@@ -85,7 +96,7 @@ class GenreBooksListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['genre'] = self.genre  # Pass genre object to template
+        context['genre'] = self.genre
         return context
 
 
@@ -94,13 +105,15 @@ def books_by_genre(request, genre_id):
     books = Book.objects.filter(genres=genre)
     return render(request, 'books_by_genre.html', {'books': books, 'genre': genre})
 
+
 class UsedBooksListView(ListView):
     model = Book
     template_name = 'used_books.html'
     context_object_name = 'books'
 
     def get_queryset(self):
-        return Book.objects.filter(secondhand=True)  # Filter only used books
+        return Book.objects.filter(secondhand=True)
+
 
 @login_required
 def add_to_cart(request, book_id):
@@ -111,11 +124,12 @@ def add_to_cart(request, book_id):
         cart_item.save()
     return redirect('cart')
 
+
 @login_required
 def cart(request):
     cart_items = CartItem.objects.filter(user=request.user)
     total = sum(item.book.price * item.quantity for item in cart_items)
-    
+
     profile, created = Profile.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
@@ -131,20 +145,12 @@ def cart(request):
         'profile': profile
     })
 
+
 @login_required
 def remove_from_cart(request, item_id):
     item = get_object_or_404(CartItem, id=item_id, user=request.user)
     item.delete()
     return redirect('cart')
-
-
-@csrf_exempt
-@login_required
-def paymentComplete(request):
-    body = json.loads(request.body)
-    CartItem.objects.filter(user=request.user).delete()
-    messages.success(request, 'Payment completed successfully!')
-    return JsonResponse('Payment completed!', safe=False)
 
 
 @login_required
@@ -159,43 +165,25 @@ def cart_checkout(request):
     total = sum(item.book.price * item.quantity for item in cart_items)
 
     profile, created = Profile.objects.get_or_create(user=request.user)
-    shipping_address = profile.address  # Optional: pass separately if needed
 
     return render(request, 'cart_checkout.html', {
         'cart_items': cart_items,
         'total': total,
         'profile': profile,
-        'shipping_address': shipping_address
+        'shipping_address': profile.address
     })
+
 
 @csrf_exempt
 @login_required
 def cart_payment_complete(request):
     body = json.loads(request.body)
-    print('Cart Order BODY:', body)
-    
-    # You can store a record of this order
     cart_items = CartItem.objects.filter(user=request.user)
     for item in cart_items:
         Order.objects.create(product=item.book)
-    
     cart_items.delete()
     return JsonResponse('Cart Payment completed!', safe=False)
 
-@login_required
-def profile_view(request):
-    # Ensure profile exists
-    profile, created = Profile.objects.get_or_create(user=request.user)
-
-    if request.method == 'POST':
-        profile.address = request.POST.get('address')
-        profile.phone_number = request.POST.get('phone_number')
-        profile.city = request.POST.get('city')
-        profile.postal_code = request.POST.get('postal_code')
-        profile.save()
-        return redirect('profile')
-
-    return render(request, 'profile.html', {'profile': profile})
 
 @login_required
 def profile_view(request):
@@ -211,20 +199,21 @@ def profile_view(request):
 
     return render(request, 'profile.html', {'form': form})
 
-def cart_payment_complete(request):
+
+@csrf_exempt
+@login_required
+def cart_payment_complete_session(request):
     body = json.loads(request.body)
     payment_id = body['paymentID']
     cart = request.session.get('cart', {})
     user = request.user
 
-    # Collect cart data as plain text (or serialize better)
     items_summary = ""
     total = 0
     for book_id, item in cart.items():
         items_summary += f"{item['title']} (x{item['quantity']}) - ₹{item['price']}\n"
         total += item['price'] * item['quantity']
 
-    # Save order
     order = Order.objects.create(
         user=user,
         items=items_summary,
@@ -232,7 +221,6 @@ def cart_payment_complete(request):
         payment_id=payment_id
     )
 
-    # Send email confirmation
     send_mail(
         subject='Your Bookstore Order Confirmation',
         message=f"Thanks for your purchase, {user.username}!\n\n"
@@ -243,10 +231,19 @@ def cart_payment_complete(request):
         fail_silently=False,
     )
 
-    # Clear cart
     request.session['cart'] = {}
-
     return JsonResponse({'message': 'Payment completed!'})
+
 
 def order_confirmation(request):
     return render(request, 'confirmation.html')
+
+@login_required
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+    
+    # Check if the user is the author of the comment
+    if request.user == comment.user:
+        comment.delete()  # Delete the comment
+    
+    return redirect('book_detail', pk=comment.book.id)

@@ -1,11 +1,16 @@
 
 from django.urls import path
 from . import views
+from .views import post_comment
 from .views import BooksListView, BooksDetailView, BookCheckoutView, paymentComplete, SearchResultsListView, books_by_genre, GenreBooksListView, UsedBooksListView
 
 
 urlpatterns = [
     path('', BooksListView.as_view(), name = 'list'),
+    path('comment/delete/<int:comment_id>/', views.delete_comment, name='delete_comment'),
+    path('book/<int:book_id>/comment/', views.post_comment, name='post_comment'),
+    path('book/<int:book_id>/comment/', post_comment, name='post_comment'),
+    path('book/<int:pk>/', views.BooksDetailView.as_view(), name='book_detail'),
     path('<int:pk>/', BooksDetailView.as_view(), name = 'detail'),
     path('<int:pk>/checkout/', BookCheckoutView.as_view(), name = 'checkout'),
     path('complete/', paymentComplete, name = 'complete'),
