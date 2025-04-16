@@ -29,20 +29,29 @@
 		{% if object.book_available is True %}
 		<div class="row">
 			<div class="col-lg">
-				<br><div class="text-center" style="width: 22rem;">
+				<br>
+				<div class="text-center" style="width: 22rem;">
 					<img src="{{ object.image_url }}" class="card-img">
-				  </div>
+				</div>
 			</div>
 			<div class="col-lg">
 				<br>
 				<div class="card card-body">
-					<h3>{{object.title}}</h3>
+					<h3>{{ object.title }}</h3>
 					<hr>
-					<h4>Total: ₹{{object.price|floatformat:2}}</h4>
+					<h4>Total: ₹{{ object.price|floatformat:2 }}</h4>
 					<hr>
+
+					{% if profile.address %}
+					<p><strong>Shipping Address:</strong><br>
+						{{ profile.address }}<br>
+						{{ profile.city }}, {{ profile.postal_code }}
+					</p>
+					{% else %}
+					<p class="text-danger">No shipping address found. <a href="{% url 'profile' %}">Update Profile</a></p>
+					{% endif %}
 
 					<div id="paypal-button-container"></div>
-
 				</div>
 			</div>
 		</div>
@@ -109,12 +118,24 @@
 
 			// Finalize the transaction
 			onApprove: function (data, actions) {
-				return actions.order.capture().then(function (details) {
-					// Show a success message to the buyer
-					completeOrder()
-					alert('Transaction completed by ' + details.payer.name.given_name + '!');
-				});
-			}
+	return actions.order.capture().then(function (details) {
+		return fetch('/cart-payment-complete/', {
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+				'X-CSRFToken': csrftoken
+			},
+			body: JSON.stringify({
+				paymentID: details.id,
+				cart: true  // if you still want to pass this
+			})
+		}).then(function (res) {
+			alert('Transaction completed by ' + details.payer.name.given_name + '!');
+			window.location.href = "/confirmation/";  // or your custom thank-you URL
+		});
+	});
+}
+
 
 
 		}).render('#paypal-button-container');

@@ -1,19 +1,22 @@
-
 {% extends 'base.html' %}
 
 {% block title %}Search{% endblock title %}
 
 {% block content %}
+<h3 class="text-secondary">Search Results</h3><hr>
 
-    <h3 class = "text-secondary">Search Results</h3><hr>
-
-    {% for every in object_list %}
-        <div>
-            <h3><a href="{% url 'detail' every.pk %}">{{ every.title }}</a></h3>
-            <p>Author: {{ every.author }}</p>
-        </div>
-    {% empty %}
+{% for every in object_list %}
+    <div class="mb-4">
+        {% if every.image_url %}
+            <img src="{{ every.image_url }}" alt="{{ every.title }}" style="max-height: 200px; width: auto;" class="mb-3">
+        {% else %}
+            <p><em>No image available</em></p>
+        {% endif %}
+        <h3><a href="{% url 'detail' every.pk %}">{{ every.title }}</a></h3>
+        <p>Author: {{ every.author }}</p>
+        <small>Book ID: {{ every.pk }}</small>
+    </div>
+{% empty %}
     <h5 class="text-danger">Nothing found :(</h5>
-    {% endfor %}
-
+{% endfor %}
 {% endblock content %}

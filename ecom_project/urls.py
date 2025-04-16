@@ -21,4 +21,6 @@ urlpatterns = [
     path('', include('books.urls')),
     path('', include("accounts.urls")), 
     path('accounts/', include("django.contrib.auth.urls")),   # working for login.html
+    path('', include('books.urls')),  # ✅ Ensures 'used_books' is registered
+
 ]

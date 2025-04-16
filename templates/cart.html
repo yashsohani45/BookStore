@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mt-5">
+    <h2 class="mb-4"><i class="bi bi-cart-fill"></i> Your Cart</h2>
+
+    {% if cart_items %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>📚 Book</th>
+                        <th>🔢 Quantity</th>
+                        <th>💰 Price</th>
+                        <th>🗑️ Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cart_items %}
+                    <tr>
+                        <td>{{ item.book.title }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>₹{{ item.book.price }}</td>
+                        <td>
+                            <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-outline-danger btn-sm">
+                                Remove
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <h4 class="text-success">Total: ₹{{ total }}</h4>
+            <a href="{% url 'cart_checkout' %}" class="btn btn-primary px-4">Proceed to Checkout</a>
+        </div>
+
+        <hr class="my-4">
+
+        <form method="POST" class="bg-light p-4 rounded shadow-sm">
+            {% csrf_token %}
+            <h5 class="mb-3">📦 Shipping Address</h5>
+
+            <div class="mb-3">
+                <label for="address" class="form-label">Address</label>
+                <textarea name="address" class="form-control" rows="2" required>{{ profile.address }}</textarea>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="city" class="form-label">City</label>
+                    <input type="text" name="city" class="form-control" value="{{ profile.city }}" required>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="postal_code" class="form-label">Postal Code</label>
+                    <input type="text" name="postal_code" class="form-control" value="{{ profile.postal_code }}" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success mt-2">Save Address</button>
+        </form>
+
+
+    {% else %}
+        <div class="alert alert-info mt-4">
+            Your cart is currently empty. Start shopping <a href="{% url 'list' %}">here</a>!
+        </div>
+    {% endif %}
+</div>
+
+{% if cart_items %}
+{% endif %}
+
+{% endblock %}

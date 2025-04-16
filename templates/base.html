@@ -16,50 +16,125 @@
 </head>
 
 <body>
-  <!--Nav Bar-->
-  <nav class="navbar navbar-dark bg-dark">
-    <a class="navbar-brand" href="{% url 'list' %}">Online Bookstore</a>
-    <div class="btn-group dropright">
+<!--Nav Bar-->
+<nav class="navbar navbar-dark bg-dark">
+  <a class="navbar-brand" href="{% url 'list' %}">Online Bookstore</a>
+  
+    <!-- Browse Dropdown for Genres -->
+    <div class="dropdown">
+      <button class="btn btn-secondary dropdown-toggle" type="button" id="browseDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Browse
+      </button>
+      <div class="dropdown-menu" aria-labelledby="browseDropdown">
+          {% for genre in genres %}
+          <a class="dropdown-item" href="{% url 'genre_books' genre.name %}">{{ genre.name }}</a>
+          {% endfor %}
+      </div>
+  </div>
+  
+  <a class="nav-link" href="{% url 'used_books' %}">Used Books</a>
+
+
+
+
+  <div class="btn-group dropright">
       <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        {{user}}
+          {{ user }}
       </a>
 
-    <!--login conditions -->
-
+      <!-- Login conditions -->
       <div class="dropdown-menu">
-        {% if user.is_authenticated %}
-        <a class="dropdown-item" href="{% url 'logout' %}">Log Out</a>
-        {% else %}
-        <a class="dropdown-item text-secondary" href="{% url 'login' %}">Log In</a>
-        <a class="dropdown-item text-secondary" href="{% url 'signup' %}">Sign Up</a>
-        {% endif %}
-        </div>
-    </div>
-    <div class="mx-auto" style="width: 10px;">
-    </div>
-
-    <!-- search css -->
-    <form class="search" action="{% url 'search_results' %}" method="get">
-      <script src="https://kit.fontawesome.com/a076d05399.js"></script>
-      <link rel="stylesheet" href="{% static 'css/base.css' %}">
-      <i class="fas fa-search"></i>
-      <input name="q" class="fas fa-search" type="text" autocomplete="off" placeholder="click to search">
-    </form>
-
-  </nav><br>
-
-
-
-  <div class='container'>
-
-
-    {% block content %}
-
-
-    {% endblock content %}
-
-
+          {% if user.is_authenticated %}
+          <a class="dropdown-item" href="{% url 'profile' %}">Profile</a>
+          <a class="dropdown-item" href="{% url 'logout' %}">Log Out</a>
+          {% else %}
+          <a class="dropdown-item text-secondary" href="{% url 'login' %}">Log In</a>
+          <a class="dropdown-item text-secondary" href="{% url 'signup' %}">Sign Up</a>
+          {% endif %}
+      </div>
   </div>
+
+  <div class="mx-auto" style="width: 10px;"></div>
+
+ 
+  <a href="{% url 'cart' %}" class="position-relative" style="margin-left: 10px;">
+    🛒 Cart
+    {% if cart_items_count > 0 %}
+        <span class="badge badge-danger position-absolute" style="top: -8px; right: 40px;">
+            {{ cart_items_count }}
+        </span>
+    {% endif %}
+</a>
+
+
+  <!-- Search Bar -->
+<form class="search d-flex" action="{% url 'search_results' %}" method="get" style="position: relative;">
+  <input name="q" type="text" class="form-control" placeholder="Search books..." autocomplete="off" style="padding-left: 30px;">
+
+  <i class="fas fa-search" style="position: absolute; top: 50%; left: 10px; transform: translateY(-50%); color: gray;"></i>
+</form>
+</nav><br>
+
+
+
+<div class='container'>
+
+  
+
+  {% block content %}
+  {% endblock content %}
+
+</div>
+
+<!-- Footer -->
+<footer class="bg-dark text-white pt-5 pb-4 mt-5">
+  <div class="container">
+    <div class="row">
+
+      <!-- About -->
+      <div class="col-md-3 mb-4">
+        <h5 class="fw-bold text-warning">📘 Online Bookstore</h5>
+        <p class="small text-light">Browse, discover, and buy your favorite books at the best prices. Enjoy a curated library for every reader.</p>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="col-md-2 mb-4">
+        <h6 class="fw-bold text-warning">Quick Links</h6>
+        <ul class="list-unstyled small">
+          <li><a href="{% url 'list' %}" class="text-white text-decoration-none">🏠 Home</a></li>
+          <li><a href="{% url 'used_books' %}" class="text-white text-decoration-none">📚 Used Books</a></li>
+          <li><a href="{% url 'cart' %}" class="text-white text-decoration-none">🛒 Cart</a></li>
+          <li><a href="{% url 'login' %}" class="text-white text-decoration-none">🔐 Login</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact Info -->
+      <div class="col-md-3 mb-4">
+        <h6 class="fw-bold text-warning">Contact Us</h6>
+        <p class="small mb-1"><i class="fas fa-map-marker-alt me-2 text-warning"></i>123 Book St, Seawoods, 456789</p>
+        <p class="small mb-1"><i class="fas fa-envelope me-2 text-warning"></i>support@onlinebookstore.com</p>
+        <p class="small"><i class="fas fa-phone-alt me-2 text-warning"></i>+91-9876543210</p>
+      </div>
+
+      <!-- Newsletter -->
+      <div class="col-md-4 mb-4">
+        <h6 class="fw-bold text-warning">📬 Subscribe to Newsletter</h6>
+        <form class="d-flex flex-column flex-sm-row">
+          <input type="email" class="form-control me-sm-2 mb-2 mb-sm-0" placeholder="Enter your email" required>
+          <button type="submit" class="btn btn-warning text-dark">Subscribe</button>
+        </form>
+      </div>
+
+    </div>
+
+    <hr class="bg-secondary">
+
+    <div class="text-center small text-muted">
+      &copy; {{ year|default:2025 }} <span class="text-warning">Online Bookstore</span>. All rights reserved.
+    </div>
+  </div>
+</footer>
+
   <!-- Optional JavaScript -->
   <!-- jQuery first, then Popper.js, then Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"

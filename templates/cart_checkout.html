@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>🛒 Cart Checkout</h2>
+
+    <table class="table table-bordered mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>Book</th>
+                <th>Quantity</th>
+                <th>Price (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in cart_items %}
+            <tr>
+                <td>{{ item.book.title }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.book.price }}</td>
+                <td>{{ item.book.price|floatformat:2|add:item.quantity }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h4>Total Amount: ₹{{ total }}</h4>
+    <hr>
+
+    {% if profile.address %}
+    <h5>Shipping Address:</h5>
+    <p>{{ profile.address }}<br>
+       {{ profile.city }}, {{ profile.postal_code }}
+    </p>
+    {% else %}
+    <p class="text-danger">No shipping address found. <a href="{% url 'profile' %}">Update Profile</a></p>
+    {% endif %}
+
+<div id="paypal-button-container"></div>
+
+<script src="https://www.paypal.com/sdk/js?client-id=YOUR_CLIENT_ID"></script>
+<script src="https://www.paypal.com/sdk/js?client-id=AaDbFCTAdi8NU4o-x6oOaBiLLoybkvO8w3xVZ2LgPAiTRwT4dDJu5u_ZecP9OtLTDvr7GZtZk_HuM3kq&currency=USD"></script>
+
+		<script>
+			function getCookie(name) {
+				var cookieValue = null;
+				if (document.cookie && document.cookie !== '') {
+					var cookies = document.cookie.split(';');
+					for (var i = 0; i < cookies.length; i++) {
+						var cookie = cookies[i].trim();
+						if (cookie.substring(0, name.length + 1) === (name + '=')) {
+							cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+							break;
+						}
+					}
+				}
+				return cookieValue;
+			}
+			var csrftoken = getCookie('csrftoken');
+		
+			var total = '{{ total }}';
+		
+			function completeOrder() {
+				var url = "{% url 'cart_payment_complete' %}";
+		
+				fetch(url, {
+					method: 'POST',
+					headers: {
+						'content-type': 'application/json',
+						'X-CSRFToken': csrftoken,
+					},
+					body: JSON.stringify({ 'cart': true })
+				});
+			}
+		
+			paypal.Buttons({
+				createOrder: function (data, actions) {
+					return actions.order.create({
+						purchase_units: [{
+							amount: {
+								value: total
+							}
+						}]
+					});
+				},
+				onApprove: function (data, actions) {
+	return actions.order.capture().then(function (details) {
+		return fetch('/cart-payment-complete/', {
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+				'X-CSRFToken': csrftoken
+			},
+			body: JSON.stringify({
+				paymentID: details.id,
+				cart: true  // if you still want to pass this
+			})
+		}).then(function (res) {
+			alert('Transaction completed by ' + details.payer.name.given_name + '!');
+			window.location.href = "/confirmation/";  // or your custom thank-you URL
+		});
+	});
+}
+
+			}).render('#paypal-button-container');
+		</script>
+		
+{% endblock %}

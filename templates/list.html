@@ -1,31 +1,39 @@
-
 {% extends 'base.html' %}
 
 {% block content %}
 
+<div class="container my-5">
+    <h3 class="mb-4">📚 Available Books</h3>
+    <div class="row g-4">
+        {% for each in object_list %}
+        <div class="col-sm-6 col-md-4 col-lg-3 d-flex">
+            <div class="card shadow-sm w-100">
+                <img src="{{ each.image_url }}" class="card-img-top" alt="{{ each.title }}">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <h5 class="card-title">{{ each.title|slice:":25" }}{% if each.title|length > 25 %}...{% endif %}</h5>
+                    <p class="card-text text-muted mb-2">₹{{ each.price|floatformat:2 }}</p>
 
-<hr>
+                    {% if each.book_available %}
+                        <span class="badge bg-success mb-2">Available</span>
+                    {% else %}
+                        <span class="badge bg-danger mb-2">Out of Stock</span>
+                    {% endif %}
 
+                    <a href="{% url 'detail' each.id %}" class="btn btn-primary btn-sm mb-2 w-100">View</a>
 
-<div class="row">
-    {% for each in object_list %}
-    <div class="col">
-        <div class="card" style="width: 13rem;">
-            <img src="{{ each.image_url }}" class="card-img-top" alt="...">
-            <div class="card-body">
-                <h5 class="card-title">{{ each.title|slice:":25"}} ...</h5>
-                <p class="card-text">₹{{ each.price|floatformat:2 }}</p>                
-                {% if each.book_available is True %}
-                <li class="text-primary">Available</li>
-                {% else %}
-                <li class="text-danger">Out of Stock !</li>
-                {% endif %}<br>
-                <a href="{% url 'detail' each.id %}" class="btn btn-primary">View</a>
+                    {% if each.book_available %}
+                    <form method="post" action="{% url 'add_to_cart' each.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-success btn-sm w-100">Add to Cart</button>
+                    </form>
+                    {% endif %}
+                </div>
             </div>
         </div>
+        {% empty %}
+        <p class="text-muted">No books available right now.</p>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
 
-{% endblock content %}
-
+{% endblock %}

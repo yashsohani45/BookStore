@@ -1,35 +1,39 @@
-
 {% extends 'base.html' %}
 
-
 {% block content %}
+<div class="container my-5">
 
-<br>
-<div class="card mb-3" style="max-width: 840px;">
-    <div class="row no-gutters">
-      <div class="col-md-4">
-        <img src="{{ object.image_url }}" class="card-img">
-      </div>
-      <div class="col-md-8">
-        <div class="card-body">
-          <h4 class="card-title">{{ object.title }}</h4>
-          <p class="card-text">Author: {{ object.author }}</p><hr>
-          <p class="card-text">{{ object.description }}</p>
+    <div class="card shadow-lg mb-4">
+        <div class="row g-0">
+            <div class="col-md-4">
+                <img src="{{ object.image_url }}" class="img-fluid rounded-start h-100 object-fit-cover" alt="{{ object.title }}">
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h3 class="card-title text-primary">{{ object.title }}</h3>
+                    <p class="text-muted">👤 <strong>Author:</strong> {{ object.author }}</p>
+                    <hr>
+                    <p class="card-text">{{ object.description }}</p>
+
+                    {% if show_condition %}
+                        <p class="mt-3"><span class="badge bg-info text-dark">📦 Condition: {{ book.condition }}</span></p>
+                    {% endif %}
+
+                    <p class="mt-3 fs-5 fw-bold text-success">₹ {{ object.price|floatformat:2 }}</p>
+
+                    <div class="mt-4 d-flex flex-wrap gap-2">
+                        <a href="{% url 'add_to_cart' book.id %}" class="btn btn-primary">🛒 Add to Cart</a>
+
+                        {% if object.book_available %}
+                            <a href="{% url 'checkout' object.pk %}" class="btn btn-success">💳 Buy Now</a>
+                        {% else %}
+                            <span class="text-danger fw-semibold">❌ Out of Stock</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 
-<!-- <p>Follow Author: </p> -->
-<p><a href="{{ object.follow_author }}">Follow Author</a> </p>
-<p>Price: ₹ {{ object.price|floatformat:2 }}</p>
-
-
-{% if object.book_available is True %}
-<a href="{% url 'checkout' object.pk %}" class="btn btn-outline-success" role="button">Buy Now</a>
-{% else %}
-<h4 class="text-danger">Out of Stock !</h4>
-{% endif %}
-
+</div>
 {% endblock content %}
-

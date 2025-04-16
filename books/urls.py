@@ -1,6 +1,7 @@
 
 from django.urls import path
-from .views import BooksListView, BooksDetailView, BookCheckoutView, paymentComplete, SearchResultsListView
+from . import views
+from .views import BooksListView, BooksDetailView, BookCheckoutView, paymentComplete, SearchResultsListView, books_by_genre, GenreBooksListView, UsedBooksListView
 
 
 urlpatterns = [
@@ -9,4 +10,16 @@ urlpatterns = [
     path('<int:pk>/checkout/', BookCheckoutView.as_view(), name = 'checkout'),
     path('complete/', paymentComplete, name = 'complete'),
     path('search/', SearchResultsListView.as_view(), name = 'search_results'),
+    path("genre/<int:genre_id>/", books_by_genre, name="books_by_genre"),
+    path('genre/<str:genre_name>/', GenreBooksListView.as_view(), name='genre_books'),
+    path('used-books/', UsedBooksListView.as_view(), name='used_books'),
+    path('add-to-cart/<int:book_id>/', views.add_to_cart, name='add_to_cart'),
+    path('cart/', views.cart, name='cart'),
+    path('remove-from-cart/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
+    path('checkout/', views.checkout, name='checkout'),
+    path('cart-checkout/', views.cart_checkout, name='cart_checkout'),
+    path('cart-payment-complete/', views.cart_payment_complete, name='cart_payment_complete'),
+    path('profile/', views.profile_view, name='profile'),
+    path('confirmation/', views.order_confirmation, name='order_confirmation'),
+
 ]

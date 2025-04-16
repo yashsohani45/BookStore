@@ -66,6 +66,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'ecom_project.context_processors.genre_list', 
+                'books.context_processors.cart_items_count',
+
             ],
         },
     },
@@ -142,3 +145,5 @@ LOGIN_REDIRECT_URL = 'list'   # requires an html file (login.html).
 LOGOUT_REDIRECT_URL = 'list'  # doesn't require any html file.
 
 # website url: https://https://ym-djecom.herokuapp.com/
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
