@@ -100,7 +100,7 @@
           console.log("🔔 Backend JSON:", json);
           alert('Transaction completed by ' + details.payer.name.given_name + '!');
           // Redirect to your confirmation or orders page
-          window.location.href = "{% url 'order_history' %}";
+          window.location.href = "{% url 'user_orders' %}";
         })
         .catch(err => {
           console.error("❌ Error calling cart_payment_complete:", err);
