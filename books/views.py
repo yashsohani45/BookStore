@@ -5,12 +5,81 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from django.http import JsonResponse
 from django.contrib import messages
+from django.core.mail import send_mail
+from django.contrib.auth.mixins import LoginRequiredMixin
 import json
-from django.contrib.auth.mixins import LoginRequiredMixin  # Add this line
-
-
-from .models import Book, Order, Genre, CartItem, Profile, Comment
+from .models import Book, Order, Genre, CartItem, Profile, Comment, CompletedOrder
 from .forms import ProfileForm
+from django.shortcuts import render
+
+def profile_view(request):
+    # your view logic here
+    return render(request, 'profile.html')
+
+
+
+from .models import Order
+
+@login_required
+def user_orders(request):
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'user_orders.html', {'orders': orders})
+
+
+
+
+@csrf_exempt
+@login_required
+def cart_payment_complete(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        print("🔔 Received data:", data)
+
+        if data.get("cart"):
+            user = request.user
+            cart_items = CartItem.objects.filter(user=user)
+
+            # Prepare items summary as a string
+            items_summary = ""
+            total = 0
+            for item in cart_items:
+                line = f"{item.book.title} (x{item.quantity}) - ₹{item.book.price * item.quantity}\n"
+                items_summary += line
+                total += item.book.price * item.quantity
+
+            # Create the order
+            order = Order.objects.create(
+                user=user,
+                items=items_summary,
+                total_amount=total,
+                payment_id=data.get("paymentID", "N/A")
+            )
+
+            # Clear cart
+            cart_items.delete()
+            print(f"✅ Order #{order.id} created for {user.username}")
+
+            return JsonResponse({'status': 'success'})
+
+    return JsonResponse({'status': 'failed'}, status=400)
+
+
+def checkout_view(request, book_id):
+    book = Book.objects.get(pk=book_id)
+
+    if request.method == 'POST':
+        order = CompletedOrder.objects.create(
+            user=request.user,
+            total_price=book.price
+        )
+        order.books.add(book)
+        order.save()
+        book.book_available = False
+        book.save()
+
+        return redirect('order_success', order_id=order.order_id)
+
+    return render(request, 'checkout.html', {'book': book})
 
 
 class BooksListView(ListView):
@@ -49,7 +118,7 @@ def post_comment(request, book_id):
             try:
                 parent = Comment.objects.get(id=parent_id)
             except Comment.DoesNotExist:
-                parent = None  # fallback if parent doesn't exist
+                parent = None
 
         if content:
             Comment.objects.create(user=request.user, book=book, content=content, parent=parent)
@@ -176,32 +245,6 @@ def cart_checkout(request):
 
 @csrf_exempt
 @login_required
-def cart_payment_complete(request):
-    body = json.loads(request.body)
-    cart_items = CartItem.objects.filter(user=request.user)
-    for item in cart_items:
-        Order.objects.create(product=item.book)
-    cart_items.delete()
-    return JsonResponse('Cart Payment completed!', safe=False)
-
-
-@login_required
-def profile_view(request):
-    profile, created = Profile.objects.get_or_create(user=request.user)
-
-    if request.method == 'POST':
-        form = ProfileForm(request.POST, instance=profile)
-        if form.is_valid():
-            form.save()
-            return redirect('profile')
-    else:
-        form = ProfileForm(instance=profile)
-
-    return render(request, 'profile.html', {'form': form})
-
-
-@csrf_exempt
-@login_required
 def cart_payment_complete_session(request):
     body = json.loads(request.body)
     payment_id = body['paymentID']
@@ -238,12 +281,16 @@ def cart_payment_complete_session(request):
 def order_confirmation(request):
     return render(request, 'confirmation.html')
 
+
 @login_required
 def delete_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
-    
-    # Check if the user is the author of the comment
     if request.user == comment.user:
-        comment.delete()  # Delete the comment
-    
+        comment.delete()
     return redirect('book_detail', pk=comment.book.id)
+
+
+@login_required
+def order_history(request):
+    orders = CompletedOrder.objects.filter(user=request.user).order_by('-ordered_at')
+    return render(request, 'order_history.html', {'orders': orders})

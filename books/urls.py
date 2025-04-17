@@ -8,6 +8,7 @@ from .views import BooksListView, BooksDetailView, BookCheckoutView, paymentComp
 urlpatterns = [
     path('', BooksListView.as_view(), name = 'list'),
     path('comment/delete/<int:comment_id>/', views.delete_comment, name='delete_comment'),
+    path('profile/', views.profile_view, name='profile'),
     path('book/<int:book_id>/comment/', views.post_comment, name='post_comment'),
     path('book/<int:book_id>/comment/', post_comment, name='post_comment'),
     path('book/<int:pk>/', views.BooksDetailView.as_view(), name='book_detail'),
@@ -24,7 +25,11 @@ urlpatterns = [
     path('checkout/', views.checkout, name='checkout'),
     path('cart-checkout/', views.cart_checkout, name='cart_checkout'),
     path('cart-payment-complete/', views.cart_payment_complete, name='cart_payment_complete'),
-    path('profile/', views.profile_view, name='profile'),
+    # path('profile/', views.profile_view, name='profile'),
     path('confirmation/', views.order_confirmation, name='order_confirmation'),
+    path('order-history/', views.order_history, name='order_history'),
+    path('my-orders/', views.user_orders, name='user_orders')
+
+
 
 ]

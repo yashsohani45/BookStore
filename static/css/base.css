@@ -29,7 +29,7 @@ body {
 
  /* Custom Navbar */
  .custom-navbar {
-  background-color: rgba(139, 69, 189, 0.75);
+  background-color: rgba(127, 46, 185, 0.75);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);

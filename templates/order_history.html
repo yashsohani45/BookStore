@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h3 class="mb-4">🧾 Your Order History</h3>
+    {% if orders %}
+        {% for order in orders %}
+            <div class="card mb-3 p-3 shadow-sm">
+                <h5>Order ID: {{ order.order_id }}</h5>
+                <p><strong>Date:</strong> {{ order.ordered_at }}</p>
+                <p><strong>Status:</strong> {{ order.status }}</p>
+                <p><strong>Total:</strong> ₹{{ order.total_price }}</p>
+                <p><strong>Books:</strong>
+                    <ul>
+                        {% for book in order.books.all %}
+                            <li>{{ book.title }}</li>
+                        {% endfor %}
+                    </ul>
+                </p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-muted">No past orders found.</p>
+    {% endif %}
+</div>
+{% endblock %}

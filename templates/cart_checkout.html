@@ -1,107 +1,117 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container mt-5">
-    <h2>🛒 Cart Checkout</h2>
+  <h2>🛒 Cart Checkout</h2>
 
-    <table class="table table-bordered mt-3">
-        <thead class="table-dark">
-            <tr>
-                <th>Book</th>
-                <th>Quantity</th>
-                <th>Price (₹)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in cart_items %}
-            <tr>
-                <td>{{ item.book.title }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.book.price }}</td>
-                <td>{{ item.book.price|floatformat:2|add:item.quantity }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+  <table class="table table-bordered mt-3">
+    <thead class="table-dark">
+      <tr>
+        <th>Book</th>
+        <th>Quantity</th>
+        <th>Price (₹)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in cart_items %}
+      <tr>
+        <td>{{ item.book.title }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ item.book.price|floatformat:2 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-    <h4>Total Amount: ₹{{ total }}</h4>
-    <hr>
+  <h4>Total Amount: ₹{{ total|floatformat:2 }}</h4>
+  <hr>
 
-    {% if profile.address %}
-    <h5>Shipping Address:</h5>
-    <p>{{ profile.address }}<br>
-       {{ profile.city }}, {{ profile.postal_code }}
-    </p>
-    {% else %}
-    <p class="text-danger">No shipping address found. <a href="{% url 'profile' %}">Update Profile</a></p>
-    {% endif %}
+  {% if profile.address %}
+  <h5>Shipping Address:</h5>
+  <p>
+    {{ profile.address }}<br>
+    {{ profile.city }}, {{ profile.postal_code }}
+  </p>
+  {% else %}
+  <p class="text-danger">
+    No shipping address found. <a href="{% url 'profile' %}">Update Profile</a>
+  </p>
+  {% endif %}
 
-<div id="paypal-button-container"></div>
+  <!-- PayPal button container -->
+  <div id="paypal-button-container" class="mt-4"></div>
+</div>
 
-<script src="https://www.paypal.com/sdk/js?client-id=YOUR_CLIENT_ID"></script>
+<!-- Load PayPal SDK once -->
 <script src="https://www.paypal.com/sdk/js?client-id=AaDbFCTAdi8NU4o-x6oOaBiLLoybkvO8w3xVZ2LgPAiTRwT4dDJu5u_ZecP9OtLTDvr7GZtZk_HuM3kq&currency=USD"></script>
 
-		<script>
-			function getCookie(name) {
-				var cookieValue = null;
-				if (document.cookie && document.cookie !== '') {
-					var cookies = document.cookie.split(';');
-					for (var i = 0; i < cookies.length; i++) {
-						var cookie = cookies[i].trim();
-						if (cookie.substring(0, name.length + 1) === (name + '=')) {
-							cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-							break;
-						}
-					}
-				}
-				return cookieValue;
-			}
-			var csrftoken = getCookie('csrftoken');
-		
-			var total = '{{ total }}';
-		
-			function completeOrder() {
-				var url = "{% url 'cart_payment_complete' %}";
-		
-				fetch(url, {
-					method: 'POST',
-					headers: {
-						'content-type': 'application/json',
-						'X-CSRFToken': csrftoken,
-					},
-					body: JSON.stringify({ 'cart': true })
-				});
-			}
-		
-			paypal.Buttons({
-				createOrder: function (data, actions) {
-					return actions.order.create({
-						purchase_units: [{
-							amount: {
-								value: total
-							}
-						}]
-					});
-				},
-				onApprove: function (data, actions) {
-	return actions.order.capture().then(function (details) {
-		return fetch('/cart-payment-complete/', {
-			method: 'POST',
-			headers: {
-				'content-type': 'application/json',
-				'X-CSRFToken': csrftoken
-			},
-			body: JSON.stringify({
-				paymentID: details.id,
-				cart: true  // if you still want to pass this
-			})
-		}).then(function (res) {
-			alert('Transaction completed by ' + details.payer.name.given_name + '!');
-			window.location.href = "/confirmation/";  // or your custom thank-you URL
-		});
-	});
-}
+<script>
+  // Helper to get CSRF token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      document.cookie.split(';').forEach(cookie => {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+        }
+      });
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie('csrftoken');
+  const total = "{{ total|floatformat:2 }}";
 
-			}).render('#paypal-button-container');
-		</script>
-		
+  console.log("💰 Cart total is", total);
+
+  paypal.Buttons({
+    createOrder(data, actions) {
+      console.log("🔄 createOrder called");
+      return actions.order.create({
+        purchase_units: [{
+          amount: { value: total }
+        }]
+      });
+    },
+    onApprove(data, actions) {
+      console.log("✅ onApprove called with data:", data);
+      return actions.order.capture().then(details => {
+        console.log("📦 Payment captured:", details);
+
+        // Use Django's URL tag so it always matches your URLconf
+        const url = "{% url 'cart_payment_complete' %}";
+        console.log("🚀 Calling backend at", url);
+
+        return fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+          },
+          body: JSON.stringify({
+            paymentID: details.id,
+            cart: true
+          })
+        })
+        .then(res => {
+          console.log("📨 Response from backend:", res);
+          return res.json();
+        })
+        .then(json => {
+          console.log("🔔 Backend JSON:", json);
+          alert('Transaction completed by ' + details.payer.name.given_name + '!');
+          // Redirect to your confirmation or orders page
+          window.location.href = "{% url 'order_history' %}";
+        })
+        .catch(err => {
+          console.error("❌ Error calling cart_payment_complete:", err);
+          alert("Something went wrong processing your order.");
+        });
+      });
+    },
+    onError(err) {
+      console.error("⚠️ PayPal error:", err);
+      alert("Payment could not be completed.");
+    }
+  }).render('#paypal-button-container');
+</script>
 {% endblock %}
