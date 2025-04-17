@@ -58,7 +58,7 @@
 
       <!-- Cart Icon -->
       <a class="nav-link position-relative me-3 text-white" href="{% url 'cart' %}">
-        <i class="fas fa-shopping-cart fs-5"></i>
+        <p class="fas fa-shopping-cart fs-5">Cart🛒</p>
         {% if cart_items_count > 0 %}
         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
           {{ cart_items_count }}

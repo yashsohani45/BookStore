@@ -11,19 +11,30 @@
                 <img src="{{ book.image_url }}" class="card-img-top" alt="{{ book.title }}">
                 <div class="card-body d-flex flex-column justify-content-between">
                     <div>
-                        <h5 class="card-title">{{ book.title }}</h5>
-                        <p class="card-text text-muted">👤 By <em>{{ book.author }}</em></p>
-                        <span class="badge bg-info text-dark mb-2">📦 Condition: {{ book.condition }}</span>
-                        <p class="card-text fw-bold text-success">₹{{ book.price }}</p>
+                        <h5 class="card-title">{{ book.title|slice:":25" }}{% if book.title|length > 25 %}...{% endif %}</h5>
+                        <p class="card-text text-muted">₹{{ book.price|floatformat:2 }}</p>
+
+                        {% if book.book_available %}
+                            <span class="badge bg-success">Available</span>
+                        {% else %}
+                            <span class="badge bg-danger">Out of Stock</span>
+                        {% endif %}
                     </div>
-                    <a href="{% url 'detail' book.id %}?from_used=true" class="btn btn-outline-primary mt-2">View Details</a>
+
+                    <div class="mt-3">
+                        <a href="{% url 'detail' book.id %}" class="btn btn-primary btn-sm w-100 mb-2">View</a>
+                        {% if book.book_available %}
+                        <form method="post" action="{% url 'add_to_cart' book.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-success btn-sm w-100">Add to Cart</button>
+                        </form>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
         {% empty %}
-        <div class="col-12 text-center text-muted">
-            <p>No used books available at the moment.</p>
-        </div>
+        <p>No used books available at the moment.</p>
         {% endfor %}
     </div>
 </div>
