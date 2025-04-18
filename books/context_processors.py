@@ -1,4 +1,10 @@
 from .models import CartItem
+from .models import Language
+
+def language_list(request):
+    languages = Language.objects.all()
+    return {'language_list': languages}
+
 
 def cart_items_count(request):
     count = 0

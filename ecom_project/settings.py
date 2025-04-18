@@ -65,6 +65,8 @@ TEMPLATES = [
 
                 # Your custom context processors
                 'ecom_project.context_processors.genre_list',
+                'books.context_processors.language_list',
+
                 'books.context_processors.cart_items_count',
             ],
         },

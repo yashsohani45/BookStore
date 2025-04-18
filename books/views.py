@@ -10,7 +10,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 import json
 from .models import Book, Order, Genre, CartItem, Profile, Comment, CompletedOrder
 from .forms import ProfileForm
-from django.shortcuts import render
+from .models import Book, Language
+
+def books_by_language(request, language_name):
+    language = get_object_or_404(Language, name=language_name)
+    books = Book.objects.filter(language=language)
+    return render(request, 'books_by_language.html', {
+        'language': language,
+        'books': books
+    })
 
 def profile_view(request):
     # your view logic here

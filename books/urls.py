@@ -31,6 +31,9 @@ urlpatterns = [
     path('order-history/', views.order_history, name='order_history'),
     path('my-orders/', views.user_orders, name='user_orders'),
     path('confirmation/', TemplateView.as_view(template_name='confirmation.html'), name='confirmation'),
+    path('language/<str:language_name>/', views.books_by_language, name='books_by_language')
+    
+
 
     
 ]

@@ -8,6 +8,13 @@ from django.db.models.signals import post_save
 import uuid  
 
 
+class Language(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
 
 
 
@@ -24,7 +31,7 @@ class Book(models.Model):
     price = models.FloatField(null=True, blank=True)
     image_url = models.CharField(max_length = 2083, default=False)
     book_available = models.BooleanField(default=False)
-
+    language = models.ForeignKey(Language, on_delete=models.CASCADE, null=True, blank=True)
     genres = models.ManyToManyField(Genre, blank=True)  # Allow multiple genres
     secondhand = models.BooleanField(default=False)
     condition = models.CharField(max_length=200, blank=True, null=True)
