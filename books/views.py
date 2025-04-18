@@ -11,6 +11,11 @@ import json
 from .models import Book, Order, Genre, CartItem, Profile, Comment, CompletedOrder
 from .forms import ProfileForm
 from .models import Book, Language
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from django.utils.timezone import now
+import pdfkit
+
 
 def books_by_language(request, language_name):
     language = get_object_or_404(Language, name=language_name)
@@ -307,3 +312,26 @@ def delete_comment(request, comment_id):
 def order_history(request):
     orders = CompletedOrder.objects.filter(user=request.user).order_by('-ordered_at')
     return render(request, 'order_history.html', {'orders': orders})
+
+@login_required
+def download_invoice(request):
+    latest_order = Order.objects.filter(user=request.user).order_by('-created_at').first()
+    
+    if not latest_order:
+        return HttpResponse("No order found.", status=404)
+
+    user_profile = request.user.profile
+    rendered = render_to_string("invoice_template.html", {
+        "order": latest_order,
+        "profile": user_profile,
+        "date_time": now().strftime("%d-%m-%Y %I:%M %p")
+    })
+
+    path_to_wkhtmltopdf = r'C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe'
+    config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
+
+    pdf = pdfkit.from_string(rendered, False, configuration=config)
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="invoice_{latest_order.id}.pdf"'
+    return response
+

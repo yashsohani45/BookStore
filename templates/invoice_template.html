@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        h2 { color: #007bff; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table, th, td { border: 1px solid #dee2e6; padding: 8px; text-align: left; }
+        .total { text-align: right; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Bookstore Invoice</h2>
+    <p><strong>Name:</strong> {{ order.user.username }}</p>
+    <p><strong>Email:</strong> {{ order.user.email }}</p>
+    <p><strong>Shipping Address:</strong><br>
+       {{ profile.address }}<br>
+       {{ profile.city }}, {{ profile.postal_code }}</p>
+    <p><strong>Payment ID:</strong> {{ order.payment_id }}</p>
+    <p><strong>Date & Time:</strong> {{ date_time }}</p>
+
+    <h3>Order Details</h3>
+    <pre>{{ order.items }}</pre>
+
+    <p class="total">Total Amount Paid: Rs.{{ order.total_amount|floatformat:2 }}</p>
+</body>
+</html>
