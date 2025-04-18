@@ -108,8 +108,9 @@ class BooksListView(ListView):
     def get_queryset(self):
         genre = self.request.GET.get('genre')
         if genre:
-            return Book.objects.filter(genres__name=genre)
-        return Book.objects.all()
+            return Book.objects.filter(genres__name=genre).order_by('?')  # Order by latest added books
+        return Book.objects.all().order_by('?')  # Default to ordering by latest books
+
 
 
 class BooksDetailView(DetailView):
