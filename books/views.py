@@ -33,15 +33,19 @@ def user_orders(request):
 def cart_payment_complete(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        print("🔔 Received data:", data)
+        print("🔔 Received data from Razorpay:", data)
 
         if data.get("cart"):
             user = request.user
             cart_items = CartItem.objects.filter(user=user)
 
-            # Prepare items summary as a string
+            if not cart_items.exists():
+                return JsonResponse({'status': 'failed', 'message': 'Cart is empty'}, status=400)
+
+            # Build order summary and total
             items_summary = ""
             total = 0
+
             for item in cart_items:
                 line = f"{item.book.title} (x{item.quantity}) - ₹{item.book.price * item.quantity}\n"
                 items_summary += line
@@ -52,16 +56,17 @@ def cart_payment_complete(request):
                 user=user,
                 items=items_summary,
                 total_amount=total,
-                payment_id=data.get("paymentID", "N/A")
+                payment_id=data.get("paymentID") or "N/A"
             )
 
             # Clear cart
             cart_items.delete()
-            print(f"✅ Order #{order.id} created for {user.username}")
 
-            return JsonResponse({'status': 'success'})
+            print(f"✅ Order #{order.id} created for {user.username} (₹{total})")
 
-    return JsonResponse({'status': 'failed'}, status=400)
+            return JsonResponse({'status': 'success', 'order_id': order.id})
+
+    return JsonResponse({'status': 'failed', 'message': 'Invalid request'}, status=400)
 
 
 def checkout_view(request, book_id):

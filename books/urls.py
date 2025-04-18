@@ -3,6 +3,7 @@ from django.urls import path
 from . import views
 from .views import post_comment
 from .views import BooksListView, BooksDetailView, BookCheckoutView, paymentComplete, SearchResultsListView, books_by_genre, GenreBooksListView, UsedBooksListView
+from django.views.generic import TemplateView
 
 
 urlpatterns = [
@@ -28,8 +29,8 @@ urlpatterns = [
     # path('profile/', views.profile_view, name='profile'),
     path('confirmation/', views.order_confirmation, name='order_confirmation'),
     path('order-history/', views.order_history, name='order_history'),
-    path('my-orders/', views.user_orders, name='user_orders')
+    path('my-orders/', views.user_orders, name='user_orders'),
+    path('confirmation/', TemplateView.as_view(template_name='confirmation.html'), name='confirmation'),
 
-
-
+    
 ]

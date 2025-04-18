@@ -37,15 +37,16 @@
   </p>
   {% endif %}
 
-  <!-- PayPal button container -->
-  <div id="paypal-button-container" class="mt-4"></div>
+ <!-- Razorpay button -->
+<div class="mt-4">
+  <button id="razorpay-button" class="btn btn-primary">Pay with Razorpay</button>
 </div>
 
-<!-- Load PayPal SDK once -->
-<script src="https://www.paypal.com/sdk/js?client-id=AaDbFCTAdi8NU4o-x6oOaBiLLoybkvO8w3xVZ2LgPAiTRwT4dDJu5u_ZecP9OtLTDvr7GZtZk_HuM3kq&currency=USD"></script>
+<!-- Razorpay Checkout Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
-  // Helper to get CSRF token
+  // Get CSRF token from cookies
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -58,60 +59,62 @@
     }
     return cookieValue;
   }
+
   const csrftoken = getCookie('csrftoken');
   const total = "{{ total|floatformat:2 }}";
 
-  console.log("💰 Cart total is", total);
+  console.log("💰 Razorpay cart total:", total);
 
-  paypal.Buttons({
-    createOrder(data, actions) {
-      console.log("🔄 createOrder called");
-      return actions.order.create({
-        purchase_units: [{
-          amount: { value: total }
-        }]
-      });
-    },
-    onApprove(data, actions) {
-      console.log("✅ onApprove called with data:", data);
-      return actions.order.capture().then(details => {
-        console.log("📦 Payment captured:", details);
+  document.getElementById('razorpay-button').onclick = function (e) {
+    e.preventDefault();
 
-        // Use Django's URL tag so it always matches your URLconf
+    const amountInPaise = (parseFloat(total) * 100).toFixed(0);
+
+    const options = {
+      key: "rzp_test_bqkG45OQ0xtgIY", // Your test key
+      amount: amountInPaise,
+      currency: "INR",
+      name: "Your Company",
+      description: "Order Payment",
+      handler: function (response) {
+        console.log("✅ Razorpay payment successful:", response);
+
         const url = "{% url 'cart_payment_complete' %}";
-        console.log("🚀 Calling backend at", url);
+        console.log("🚀 Sending payment to backend at:", url);
 
-        return fetch(url, {
+        fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrftoken
           },
           body: JSON.stringify({
-            paymentID: details.id,
+            paymentID: response.razorpay_payment_id,
             cart: true
           })
         })
         .then(res => {
-          console.log("📨 Response from backend:", res);
+          console.log("📨 Backend response:", res);
           return res.json();
         })
         .then(json => {
           console.log("🔔 Backend JSON:", json);
-          alert('Transaction completed by ' + details.payer.name.given_name + '!');
-          // Redirect to your confirmation or orders page
-          window.location.href = "{% url 'user_orders' %}";
+          alert("Payment successful!");
+          window.location.href = "{% url 'confirmation' %}";
         })
         .catch(err => {
-          console.error("❌ Error calling cart_payment_complete:", err);
+          console.error("❌ Error in backend request:", err);
           alert("Something went wrong processing your order.");
         });
-      });
-    },
-    onError(err) {
-      console.error("⚠️ PayPal error:", err);
-      alert("Payment could not be completed.");
-    }
-  }).render('#paypal-button-container');
+      },
+      theme: {
+        color: "#3399cc"
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+  };
 </script>
+
 {% endblock %}
