@@ -13,7 +13,6 @@
                     <div>
                         <h5 class="card-title">{{ book.title|slice:":25" }}{% if book.title|length > 25 %}...{% endif %}</h5>
                         <p class="card-text text-muted">₹{{ book.price|floatformat:2 }}</p>
-                        <p class="card-text"><strong>Condition:</strong> {{ book.condition }}</p>
 
 
                         {% if book.book_available %}
