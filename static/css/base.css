@@ -12,7 +12,7 @@ body {
   .custom-navbar .navbar-brand,
 .custom-navbar .nav-link,
 .custom-navbar .dropdown-toggle {
-  color: #212529 !important; /* Bootstrap's default dark */
+  color: white !important; /* Bootstrap's default dark */
 }
 
 .custom-navbar .dropdown-menu {
