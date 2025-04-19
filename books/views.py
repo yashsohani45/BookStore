@@ -45,42 +45,54 @@ def user_orders(request):
 @login_required
 def cart_payment_complete(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        print("🔔 Received data from Razorpay:", data)
+        try:
+            data = json.loads(request.body)
+            print("🔔 Received data from Razorpay:", data)
 
-        if data.get("cart"):
             user = request.user
             cart_items = CartItem.objects.filter(user=user)
 
             if not cart_items.exists():
                 return JsonResponse({'status': 'failed', 'message': 'Cart is empty'}, status=400)
 
-            # Build order summary and total
+            # Build order summary and calculate total
             items_summary = ""
             total = 0
-
             for item in cart_items:
                 line = f"{item.book.title} (x{item.quantity}) - ₹{item.book.price * item.quantity}\n"
                 items_summary += line
                 total += item.book.price * item.quantity
 
-            # Create the order
+            # Create Order (basic record for payment info)
             order = Order.objects.create(
                 user=user,
                 items=items_summary,
                 total_amount=total,
-                payment_id=data.get("paymentID") or "N/A"
+                payment_id=data.get("paymentID", "N/A")
             )
 
-            # Clear cart
+            # Create CompletedOrder (for admin/revenue tracking)
+            completed_order = CompletedOrder.objects.create(
+                user=user,
+                total_price=total
+            )
+            for item in cart_items:
+                completed_order.books.add(item.book)
+
+            completed_order.save()
+
+            # Clear the cart
             cart_items.delete()
 
-            print(f"✅ Order #{order.id} created for {user.username} (₹{total})")
+            print(f"✅ Order #{order.id} and CompletedOrder #{completed_order.id} created for {user.username}")
 
             return JsonResponse({'status': 'success', 'order_id': order.id})
 
-    return JsonResponse({'status': 'failed', 'message': 'Invalid request'}, status=400)
+        except Exception as e:
+            print("❌ Error in cart_payment_complete:", e)
+            return JsonResponse({'status': 'failed', 'message': 'Something went wrong'}, status=500)
 
+    return JsonResponse({'status': 'failed', 'message': 'Invalid request'}, status=400)
 
 def checkout_view(request, book_id):
     book = Book.objects.get(pk=book_id)

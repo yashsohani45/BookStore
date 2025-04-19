@@ -1,0 +1,29 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <h1>{{ title }}</h1>
+
+  <div class="module">
+    <p><strong>Total Revenue:</strong> ₹{{ total_revenue|floatformat:2 }}</p>
+    <p><strong>Total Orders:</strong> {{ total_orders }}</p>
+  </div>
+
+  <h2>Revenue &amp; Orders by Genre</h2>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Genre</th>
+        <th>Revenue (₹)</th>
+        <th>Orders</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for stat in genre_stats %}
+      <tr>
+        <td>{{ stat.books__genres__name }}</td>
+        <td>{{ stat.revenue|floatformat:2 }}</td>
+        <td>{{ stat.orders }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

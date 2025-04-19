@@ -40,13 +40,16 @@ class Book(models.Model):
         return self.title
 
 class CompletedOrder(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    books = models.ManyToManyField(Book)
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    ordered_at = models.DateTimeField(auto_now_add=True)
+    order_id     = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    user         = models.ForeignKey(User, on_delete=models.CASCADE)
+    books        = models.ManyToManyField(Book)
+    total_price  = models.DecimalField(max_digits=10, decimal_places=2)
+    ordered_at   = models.DateTimeField(auto_now_add=True)
+    status       = models.CharField(max_length=20, default='Completed')
 
     def __str__(self):
-        return f"Order #{self.id} by {self.user.username}"
+        return f"Order {self.order_id} by {self.user.username}"
+
 
 
 class Order(models.Model):
